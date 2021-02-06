@@ -2,7 +2,7 @@
 resource "azurerm_resource_group" "aksrg" {
   name     = "${var.resource_group_name}_${random_integer.random_int.result}"
   location = var.location
-    
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -142,7 +142,7 @@ resource "azurerm_key_vault_secret" "tfm-blue-ip" {
   name         = "tfm-blue-ip"
   value        = azurerm_public_ip.tfm-blue.ip_address
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -162,7 +162,7 @@ resource "azurerm_key_vault_secret" "tfm-green-ip" {
   name         = "tfm-green-ip"
   value        = azurerm_public_ip.tfm-green.ip_address
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -209,7 +209,7 @@ resource "azurerm_key_vault_secret" "tfm_name" {
   name         = "tfm-name"
   value        = azurerm_traffic_manager_profile.tfmprofile.name
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -240,7 +240,7 @@ resource "azurerm_redis_cache" "aksredis" {
   enable_non_ssl_port = true
   redis_configuration {
   }
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -283,9 +283,9 @@ resource "azurerm_key_vault_access_policy" "aksvault_policy_forme" {
   object_id = var.object_id
 
   secret_permissions = [
-      "get",
-      "list",
-      "set"
+    "get",
+    "list",
+    "set"
   ]
 }
 
@@ -294,7 +294,7 @@ resource "azurerm_key_vault_secret" "appinsights_secret" {
   name         = "appinsights-key"
   value        = azurerm_application_insights.aksainsights.instrumentation_key
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -305,7 +305,7 @@ resource "azurerm_key_vault_secret" "redis_host_secret" {
   name         = "redis-host"
   value        = azurerm_redis_cache.aksredis.hostname
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -316,7 +316,7 @@ resource "azurerm_key_vault_secret" "redis_access_secret" {
   name         = "redis-access"
   value        = azurerm_redis_cache.aksredis.primary_access_key
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -327,7 +327,7 @@ resource "azurerm_key_vault_secret" "acrname_secret" {
   name         = "acr-name"
   value        = azurerm_container_registry.aksacr.name
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -338,7 +338,7 @@ resource "azurerm_key_vault_secret" "public_ip" {
   name         = "phoenix-fqdn"
   value        = "${azurerm_public_ip.nginx_ingress.ip_address}.xip.io"
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -349,7 +349,7 @@ resource "azurerm_key_vault_secret" "appgw_public_ip" {
   name         = "appgw-fqdn"
   value        = "${azurerm_public_ip.appgw_ip.ip_address}.xip.io"
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -360,7 +360,7 @@ resource "azurerm_key_vault_secret" "phoenix-namespace" {
   name         = "phoenix-namespace"
   value        = "calculator"
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -371,7 +371,7 @@ resource "azurerm_key_vault_secret" "aks-name" {
   name         = "aks-name"
   value        = azurerm_kubernetes_cluster.akstf.name
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -382,7 +382,7 @@ resource "azurerm_key_vault_secret" "aks-group" {
   name         = "aks-group"
   value        = azurerm_resource_group.aksrg.name
   key_vault_id = azurerm_key_vault.aksvault.id
-  
+
   tags = {
     environment = var.environment
     project     = "phoenix"
@@ -427,7 +427,7 @@ resource "azurerm_kubernetes_cluster" "akstf" {
     admin_username = "phoenix"
 
     ssh_key {
-      key_data = file("${var.ssh_public_key}")
+      key_data = file(var.ssh_public_key)
     }
   }
 
@@ -445,12 +445,12 @@ resource "azurerm_kubernetes_cluster" "akstf" {
   }
 
   network_profile {
-      network_plugin = "azure"
-      service_cidr   = "10.2.0.0/24"
-      dns_service_ip = "10.2.0.10"
-      docker_bridge_cidr = "172.17.0.1/16"
-      #pod_cidr = "" selected by subnet_id
-      load_balancer_sku = "standard"
+    network_plugin = "azure"
+    service_cidr   = "10.2.0.0/24"
+    dns_service_ip = "10.2.0.10"
+    docker_bridge_cidr = "172.17.0.1/16"
+    #pod_cidr = "" selected by subnet_id
+    load_balancer_sku = "standard"
   }
 
   service_principal {
@@ -516,12 +516,10 @@ provider "kubernetes" {
 # https://www.terraform.io/docs/providers/helm/index.html
 provider "helm" {
   kubernetes {
-    load_config_file = false
     host                   = azurerm_kubernetes_cluster.akstf.kube_config.0.host
     client_certificate     = base64decode(azurerm_kubernetes_cluster.akstf.kube_config.0.client_certificate)
     client_key             = base64decode(azurerm_kubernetes_cluster.akstf.kube_config.0.client_key)
     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.akstf.kube_config.0.cluster_ca_certificate)
-    config_path = "ensure-that-we-never-read-kube-config-from-home-dir"
   }
 }
 
@@ -529,7 +527,7 @@ provider "helm" {
 # https://www.terraform.io/docs/providers/helm/release.html
 resource "helm_release" "nginx_ingress" {
   name       = "nginx-ingress"
-  repository = "https://kubernetes-charts.storage.googleapis.com" 
+  repository = "https://charts.helm.sh/stable"
   chart      = "nginx-ingress"
   namespace  = "nginx"
   force_update = "true"
@@ -544,7 +542,7 @@ resource "helm_release" "nginx_ingress" {
     name  = "controller.service.loadBalancerIP"
     value = azurerm_public_ip.nginx_ingress.ip_address
   }
-  
+
   set {
     name  = "controller.replicaCount"
     value = "2"
@@ -584,15 +582,15 @@ output "NODE_GROUP" {
 }
 
 output "ID" {
-    value = azurerm_kubernetes_cluster.akstf.id
+  value = azurerm_kubernetes_cluster.akstf.id
 }
 
 output "PUBLIC_IP" {
-    value = azurerm_public_ip.nginx_ingress.ip_address
+  value = azurerm_public_ip.nginx_ingress.ip_address
 }
 
 output "PUBLIC_IP_STAGE" {
-    value = azurerm_public_ip.nginx_ingress-stage.ip_address
+  value = azurerm_public_ip.nginx_ingress-stage.ip_address
 }
 
 output "instrumentation_key" {

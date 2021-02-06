@@ -18,14 +18,25 @@ Try to define a unique but short deployment name - it will be used to define  dn
 ```
 DEPLOYMENT_NAME=dzphix
 echo "creating service principals in azure"
-AKS_SERVICE_PRINCIPAL_ID=$(az ad sp create-for-rbac --name $DEPLOYMENT_NAME-aks -o json | jq -r '.appId')
-AZDO_SERVICE_PRINCIPAL_ID=$(az ad sp create-for-rbac --name $DEPLOYMENT_NAME-azdo -o json | jq -r '.appId')
+AKS_SERVICE_PRINCIPAL_ID=$(az ad sp create-for-rbac --name $DEPLOYMENT_NAME-aks  --skip-assignment -o json | jq -r '.appId')
+AZDO_SERVICE_PRINCIPAL_ID=$(az ad sp create-for-rbac --name $DEPLOYMENT_NAME-azdo --skip-assignment -o json | jq -r '.appId')
+TERRAFORM_SERVICE_PRINCIPAL_ID=$(az ad sp create-for-rbac --name $DEPLOYMENT_NAME-terra --skip-assignment  -o json | jq -r '.appId')
+
+az role assignment create --assignee $AKS_SERVICE_PRINCIPAL_ID --role Contributor
+az role assignment create --assignee $AZDO_SERVICE_PRINCIPAL_ID --role Contributor
+az role assignment create --assignee $TERRAFORM_SERVICE_PRINCIPAL_ID --role Contributor
+az role assignment create --assignee $TERRAFORM_SERVICE_PRINCIPAL_ID --role "User Access Administrator"
+
 
 AKS_SERVICE_PRINCIPAL_SECRET=$(az ad app credential reset --id $AKS_SERVICE_PRINCIPAL_ID -o json | jq '.password' -r)
 AZDO_SERVICE_PRINCIPAL_SECRET=$(az ad app credential reset --id $AZDO_SERVICE_PRINCIPAL_ID -o json | jq '.password' -r)
+TERRAFORM_SERVICE_PRINCIPAL_SECRET=$(az ad app credential reset --id $TERRAFORM_SERVICE_PRINCIPAL_ID -o json | jq '.password' -r)
+
 
 AKS_SERVICE_PRINCIPAL_OBJECTID=$(az ad sp show --id $AKS_SERVICE_PRINCIPAL_ID -o json | jq '.objectId' -r)
 AZDO_SERVICE_PRINCIPAL_OBJECTID=$(az ad sp show --id $AZDO_SERVICE_PRINCIPAL_ID -o json | jq '.objectId' -r)
+TERRAFORM_SERVICE_PRINCIPAL_OBJECTID=$(az ad sp show --id $TERRAFORM_SERVICE_PRINCIPAL_ID -o json | jq '.objectId' -r)
+
 
 AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)
 AZURE_SUBSCRIPTION_NAME=$(az account show --query name -o tsv)
@@ -48,10 +59,13 @@ echo -e "\n This is the private output in case you want to set them later:"
 echo -e "DEPLOYMENT_NAME=$DEPLOYMENT_NAME"
 echo -e "AKS_SERVICE_PRINCIPAL_ID=$AKS_SERVICE_PRINCIPAL_ID"
 echo -e "AZDO_SERVICE_PRINCIPAL_ID=$AZDO_SERVICE_PRINCIPAL_ID"
+echo -e "TERRAFORM_SERVICE_PRINCIPAL_ID=$TERRAFORM_SERVICE_PRINCIPAL_ID"
 echo -e "AKS_SERVICE_PRINCIPAL_SECRET=$AKS_SERVICE_PRINCIPAL_SECRET"
 echo -e "AZDO_SERVICE_PRINCIPAL_SECRET=$AZDO_SERVICE_PRINCIPAL_SECRET"
+echo -e "TERRAFORM_SERVICE_PRINCIPAL_SECRET=$TERRAFORM_SERVICE_PRINCIPAL_SECRET"
 echo -e "AKS_SERVICE_PRINCIPAL_OBJECTID=$AKS_SERVICE_PRINCIPAL_OBJECTID"
 echo -e "AZDO_SERVICE_PRINCIPAL_OBJECTID=$AZDO_SERVICE_PRINCIPAL_OBJECTID"
+echo -e "TERRAFORM_SERVICE_PRINCIPAL_OBJECTID=$TERRAFORM_SERVICE_PRINCIPAL_OBJECTID"
 echo -e "AZURE_TENANT_ID=$AZURE_TENANT_ID"
 echo -e "AZURE_SUBSCRIPTION_NAME=$AZURE_SUBSCRIPTION_NAME"
 echo -e "AZURE_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID"
@@ -61,7 +75,7 @@ echo -e "\n"
 
 1. Your can replace these values in the variable file by running the following
 ```
-sed -e "s/SERVICE_PRINCIPAL_ID_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_ID/ ; s/SERVICE_PRINCIPAL_SECRET_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_SECRET/ ; s/SERVICE_PRINCIPAL_OBJECTID_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_OBJECTID/ ; s/AZDO_OBJECTID_PLACEHOLDER/$AZDO_SERVICE_PRINCIPAL_OBJECTID/ ; s/TENANT_ID_PLACEHOLDER/$AZURE_TENANT_ID/ ; s/DEPLOYMENT_NAME/$DEPLOYMENT_NAME/ ; s/SUBSCRIPTION_ID_PLACEHOLDER/$AZURE_SUBSCRIPTION_ID/ ; s/MYOBJECT_ID_PLACEHOLDER/$AZURE_MYOWN_OBJECT_ID/ " variables.tf.template > variables_mod.tf
+sed -e "s/SERVICE_PRINCIPAL_ID_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_ID/ ; s/SERVICE_PRINCIPAL_SECRET_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_SECRET/ ; s/SERVICE_PRINCIPAL_OBJECTID_PLACEHOLDER/$AKS_SERVICE_PRINCIPAL_OBJECTID/ ; s/AZDO_OBJECTID_PLACEHOLDER/$AZDO_SERVICE_PRINCIPAL_OBJECTID/ ; s/TENANT_ID_PLACEHOLDER/$AZURE_TENANT_ID/ ; s/DEPLOYMENT_NAME/$DEPLOYMENT_NAME/ ; s/SUBSCRIPTION_ID_PLACEHOLDER/$AZURE_SUBSCRIPTION_ID/ ; s/TERRAFORM_OBJECT_ID_PLACEHOLDER/$TERRAFORM_SERVICE_PRINCIPAL_OBJECTID/ ; s/TERRAFORM_PRINCIPAL_ID_PLACEHOLDER/$TERRAFORM_SERVICE_PRINCIPAL_ID/ ; s/TERRAFORM_PRINCIPAL_SECRET_PLACEHOLDER/$TERRAFORM_SERVICE_PRINCIPAL_SECRET/" variables.tf.template > variables_mod.tf
 ```
 
 
@@ -96,6 +110,8 @@ terraform apply out.plan
 ```
 
 1. configure the application gateway addon
+   https://docs.microsoft.com/de-de/azure/application-gateway/tutorial-ingress-controller-add-on-existing
+
 ```
 KUBE_GROUP=dzphix_231
 KUBE_NAME=dzphix-231

@@ -10,17 +10,17 @@ variable "tenant_id" {
 
 # Object id of your ad account
 variable "object_id" {
-    default = "MYOBJECT_ID_PLACEHOLDER"
+    default = "TERRAFORM_OBJECT_ID_PLACEHOLDER"
 }
 
 # Terraform client id
 variable "terraform_serviceprincipal_id" {
-    default = "SERVICE_PRINCIPAL_ID_PLACEHOLDER"
+    default = "TERRAFORM_PRINCIPAL_ID_PLACEHOLDER"
 }
 
 # Terraform client secret
 variable "terraform_serviceprincipal_secret" {
-    default = "SERVICE_PRINCIPAL_SECRET_PLACEHOLDER"
+    default = "TERRAFORM_PRINCIPAL_SECRET_PLACEHOLDER"
 }
 
 # Kubernetes service principal id
